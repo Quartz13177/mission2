@@ -2,13 +2,16 @@
 QuizGame 클래스 : 게임 전체를 관리하는 '사회자' 역할.
 
 - 어떤 퀴즈들이 있는지(quizzes), 최고 점수가 몇 점인지(best_score)를 들고 있고
-- 메뉴 표시 / 퀴즈 추가 / 목록 / 점수 확인 / 삭제 / 저장을 메서드로 나눠서 수행한다.
+- 메뉴 표시 / 퀴즈 풀기 / 추가 / 목록 / 점수 확인 / 삭제 / 저장을 메서드로 나눠서 수행한다.
 
-퀴즈 풀기 기능은 별도 브랜치(feature/play-quiz)에서 개발할 예정이다.
+퀴즈 출제 진행 자체는 play.py 가 담당하고, 이 클래스는 결과를 받아 상태를 관리한다.
 """
 
+from datetime import datetime
+
+import play
 import ui
-from config import CHOICE_COUNT
+from config import CHOICE_COUNT, HINT_PENALTY, HISTORY_LIMIT
 from quiz import Quiz
 from storage import Storage
 
@@ -100,11 +103,52 @@ class QuizGame:
                 break
 
     # ------------------------------------------------------------
-    # 1. 퀴즈 풀기 (feature/play-quiz 브랜치에서 구현 예정)
+    # 1. 퀴즈 풀기
     # ------------------------------------------------------------
     def play_quiz(self):
+        """한 판 진행은 play.py 에게 맡긴다."""
+        play.run_round(self)
+
+    def record_result(self, correct_count, total_count, hint_count):
+        """
+        한 판이 끝난 뒤 play.py 가 호출한다.
+        점수를 계산하고, 최고 점수와 기록을 갱신한 뒤 저장한다.
+        """
+        score = self._calculate_score(correct_count, total_count, hint_count)
+
         print("")
-        print("🚧 퀴즈 풀기 기능은 아직 준비 중입니다.")
+        print(ui.DOUBLE_LINE)
+        print("🏆 결과: %d문제 중 %d문제 정답! (%d점)" % (total_count, correct_count, score))
+        if hint_count:
+            print("   (힌트 %d회 사용 : -%d점)" % (hint_count, hint_count * HINT_PENALTY))
+
+        if score > self.best_score:
+            self.best_score = score
+            self.best_detail = {"correct": correct_count, "total": total_count}
+            print("🎉 새로운 최고 점수입니다!")
+        else:
+            print("   현재 최고 점수: %d점" % self.best_score)
+        print(ui.DOUBLE_LINE)
+
+        # 보너스 5 : 게임 기록을 날짜/시간과 함께 남긴다.
+        self.history.append(
+            {
+                "played_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "total": total_count,
+                "correct": correct_count,
+                "score": score,
+            }
+        )
+        self.history = self.history[-HISTORY_LIMIT:]
+        self.save()
+
+    @staticmethod
+    def _calculate_score(correct_count, total_count, hint_count):
+        """점수 = 정답률(100점 만점) - 힌트 사용 횟수 x 감점. 최소 0점."""
+        if total_count == 0:
+            return 0
+        base = int(round(100.0 * correct_count / total_count))
+        return max(0, base - hint_count * HINT_PENALTY)
 
     # ------------------------------------------------------------
     # 2. 퀴즈 추가
