@@ -301,3 +301,5 @@ git merge --no-ff feature/play-quiz   # 병합 기록이 남는 방식으로 합
 - [x] Git 기초 명령 7종 사용
 - [x] README 필수 항목 6가지
 - [x] 보너스 5개 전부 구현
+
+> clone 한 저장소에서 추가한 한 줄입니다. (clone / pull 실습)
