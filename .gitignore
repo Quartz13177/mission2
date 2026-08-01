@@ -1,0 +1,17 @@
+# 프로그램이 실행되면서 자동으로 만들어지는 데이터 파일
+# (사람마다 내용이 달라지므로 저장소에 올리지 않는다)
+state.json
+state.json.tmp
+state.json.bak
+
+# 파이썬이 실행 속도를 위해 자동 생성하는 캐시 폴더
+__pycache__/
+*.pyc
+
+# 운영체제가 만드는 숨김 파일
+.DS_Store
+Thumbs.db
+
+# 에디터 설정 폴더
+.vscode/
+.idea/
